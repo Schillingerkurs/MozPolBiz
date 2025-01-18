@@ -24,7 +24,6 @@ from .set_lawyer_dummy import set_lawyer_dummy
 from .get_og_network import get_og_network
 from .map_owner_ids import map_owner_ids
 from .map_all_owner_ids import map_all_owner_ids
-from .get_missing_names import get_missing_names
 from .get_name_base import get_name_base
 from .add_blltn_owner import add_blltn_owner
 from .portugese_name_gender_ratios import portugese_name_gender_ratios

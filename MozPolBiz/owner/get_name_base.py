@@ -4,6 +4,8 @@ Created on Thu Jul 28 11:41:21 2022
 
 @author: fs.egb
 """
+
+
 from pathlib import Path
 import pandas as pd
 import owner
@@ -51,7 +53,7 @@ def get_name_base(all_names = list(), other = dict())-> pd.DataFrame():
 
     # base = test_name_mapper.type_one_error_check(base, entry_names)
     base = owner.map_initials(base)
-    base = owner.map_gender(base, other)
+#     base = owner.map_gender(base, other)
     id_mapper = owner.set_id(base['beta_clean'], "person_")
     base['id'] = base['beta_clean'].map(id_mapper)
 

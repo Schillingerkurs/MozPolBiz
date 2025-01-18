@@ -17,7 +17,8 @@ import sys
 
 
 
-HERE = Path(__file__).parent.parent.parent.parent.absolute()
+HERE = Path(__file__).parent.parent.absolute()
+
 
 
 
@@ -57,7 +58,7 @@ def load_blltn_and_entities(HERE):
     # load most recent df
     lp = HERE/Path("data","interim")
 
-    with open(lp/Path("all_entitiy_mappings.pkl") , 'rb') as f:
+    with open(lp/Path("entity_mappings.pkl") , 'rb') as f:
         entity_mapper = pickle.load(f)
 
     with open(lp/Path("firmregister_full.pkl"), 'rb') as f:
@@ -74,7 +75,7 @@ firms, entity_mapper = load_blltn_and_entities(HERE)
 name_base =  entity_mapper['individual_mappings']
 
 name_mapper = dict(zip(name_base['raw'],name_base['id']))
-og_mapper = dict(zip(name_base['id'], name_base['og']))
+# og_mapper = dict(zip(name_base['id'], name_base['og']))
 
 
 pep_mandates = load_pep_data(HERE)
@@ -96,15 +97,15 @@ party_mapper = manage_pep_data.get_party_founders(panel, firms, y_i, entity_mapp
 
 oppo_mapper = {k: v for k,v in party_mapper.items() if "frelimo" not in v.lower()}
 
-
+print("starting the panel")
 panel_full = (
         panel
         .merge(pers_char, left_on ="id", right_on = "id", how = 'left')
-        .assign(og  = lambda x : x['id'].map(og_mapper))
+        # .assign(og  = lambda x : x['id'].map(og_mapper))
         .fillna(0)
         .assign(gender  = lambda x : x['gender'].astype(float))
         .assign(lawyer  = lambda x : x['lawyer'].astype(str))
-        .assign(og  = lambda x : x['og'].astype(str))
+        # .assign(og  = lambda x : x['og'].astype(str))
         .sort_values(by=['y'])
         .assign(opposition_founder  = lambda x : x['m'].map(oppo_mapper))
         .drop(columns = ['m'])  )
@@ -135,7 +136,7 @@ panel_full = panel_full.drop(columns = [ 'MP','opposition_founder', 'family_old_
 
 
 
-controll_vars = panel_full[['id', 'family', 'gender', 'lawyer', 'og']].drop_duplicates()
+controll_vars = panel_full[['id', 'family', 'gender', 'lawyer']].drop_duplicates()
 
 
 treatments = panel_full[['id', 'y', 'Minister', 'Governor', 'Vice-Minister', 'Minister_who_gov', 'cc', 'pb']]

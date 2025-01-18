@@ -5,7 +5,7 @@ Created on Thu Mar 10 17:17:57 2022
 @author: fs.egb
 """
 
-
+# %%
 from pathlib import Path
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -47,11 +47,10 @@ def load_reg_and_mapper(HERE):
     return bulletin, ent_mapper, wb
 
 
+
+
 def load_keywords(HERE):
     keywrds = pd.ExcelFile(HERE/Path("data","raw","keywords","all_keywords_mapper.xlsx"))
-
-
-
     return keywrds
 
 
@@ -59,10 +58,10 @@ def load_keywords(HERE):
 # TODO: include business tychoons (listed in keywords)
 
 
-
 bulletin, entity_mapper,wb  =  load_reg_and_mapper(HERE)
 keywrds = load_keywords(HERE)
 
+# %%
 entity_mapper['individual_mappings']  = manage_entities.map_individual_characteristics(HERE)
 
 

@@ -15,7 +15,7 @@ import json
 pd.options.mode.chained_assignment = None  # default='warn'
 import pickle
 # import re
-
+import manage_entities
 # from shapely.geometry import MultiPolygon
 
 
@@ -73,14 +73,7 @@ def load_other_data(HERE):
                              "moz_admbnda_adm3_ine_20190607.json"), "r") as f:
         adm_information['adm3'] = json.loads(f.read())
 
-
-    fdi_markets = pd.ExcelFile(l_p/Path("external","fdi_markets",
-                             "FDImarkets_moz.xlsx")).parse('fDiMarkets')
-
-    fdi_markets.columns = fdi_markets.iloc[1]
-
-
-    return keywrds, adm_information , fdi_markets,
+    return keywrds, adm_information
 
 
 
@@ -107,14 +100,12 @@ def main():
     # use sample_faction to test code snippets 1 = 100 % .
 
     raw = load_html(sample_faction = 1, HERE = HERE)
-    keywrds, adm_information , fdi_markets, \
-                = load_other_data(HERE)
+    keywrds, adm_information = load_other_data(HERE)
 
 
     # raw entries for documentation of input data
     raw.to_pickle(HERE/Path("data","interim","raw_bulletin.pkl"))
 
-    flexi_names, felxi_full = flexi.select_flexi(HERE)
 
 
 
@@ -131,8 +122,7 @@ def main():
           )
 
  #%%
-    df, entity_mapper = secondary_firm_data.entity_mappings(df,
-                        fdi_markets, keywrds , flexi_names)
+    df, entity_mapper = secondary_firm_data.entity_mappings(df,keywrds)
 
 #%%
     df = (
@@ -140,7 +130,6 @@ def main():
             .pipe(firm_register.map_anything_on_adm_names, adm_information)
             .pipe(firm_register.translate_capital)
             .pipe(firm_register.define_year, y_i)
-            # .pipe(firm_register.identify_FDI_affiliations,entity_mapper)
             # .drop(columns=['Date of writing',
             #              'Place and date of signature','Place of the seat',
             #              'adm_level','Place of signature', 'primary_location',
@@ -149,8 +138,14 @@ def main():
         )
 
 
+    entity_mapper['individual_mappings']  = manage_entities.map_individual_characteristics(HERE)
+
+
+
 
     store_files(df, entity_mapper, HERE)
+
+    print("done")
 
 
 #%%

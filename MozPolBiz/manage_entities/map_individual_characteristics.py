@@ -5,6 +5,8 @@ Created on Thu Aug  4 11:01:33 2022
 @author: fs.egb
 """
 
+# %%
+
 from pathlib import Path
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -13,12 +15,11 @@ import pickle
 from string_grouper import group_similar_strings, match_strings
 import sys
 
-HERE = Path(__file__).parent.parent.parent.parent.absolute()
+HERE = Path(__file__).parent.parent.parent.absolute()
 
 
+sys.path.insert(0, str(HERE/Path("MozPolBiz")))
 
-
-sys.path.insert(0, str(HERE/Path("src", "features")))
 
 # own modules
 import owner
@@ -106,11 +107,12 @@ def other_name_characteristics(HERE):
 
 
 
-
-
+# %%
 
 def map_individual_characteristics(HERE):
 
+
+# %%
     bulletin = pd.read_pickle(HERE/Path("data","interim","firmregister_full.pkl"))
     pep_mandates = load_nat_peps(HERE)
     pep_mandates  =  owner.clean_cip3(pep_mandates)
@@ -135,9 +137,134 @@ def map_individual_characteristics(HERE):
 
     all_names =  owner.get_all_names(pep_mandates, entry_names, other)
 
-    base = owner.get_name_base(all_names, other)
+# %%
 
-    base = owner.get_og_network(bulletin, base)
+    """ setup main characterisitcs of an individual """
+
+
+    base = (
+            owner
+            .get_surname_base(all_names, family_fuzz = 0.96)
+            .query("family!= ''")
+            .drop(columns =['family'])
+            .rename(columns = {'family_beta': "family"}))
+
+
+
+    base, first_name_matches = owner.map_family_subsets(base, first_name_fuzz = 0.75)
+
+    base['alpha_clean'] = base['alpha_clean'].fillna(base['clean'])
+
+    base['beta_clean'] = group_similar_strings(base['alpha_clean'],
+                                          min_similarity = 0.89,
+                                          )
+
+
+
+
+    family_dict = owner.get_surnames(set(base['beta_clean']))
+
+
+    base = (
+            base
+            .drop(columns = ['family', 'alpha_clean'])
+            .assign(family = lambda x : x['beta_clean'].map(family_dict))
+            )
+
+
+
+
+
+    # base = test_name_mapper.type_one_error_check(base, entry_names)
+    base = owner.map_initials(base)
+#     base = owner.map_gender(base, other)
+    id_mapper = owner.set_id(base['beta_clean'], "person_")
+    base['id'] = base['beta_clean'].map(id_mapper)
+
+    base = owner.set_lawyer_dummy(base,other)
+ #%%
+
+
+    def get_missing_names(all_names, base):
+        missing_names = set(all_names)-set(base['raw'])
+        for m in missing_names:
+            dict_ = {'raw':m ,'family': '', 'beta_clean':'', 'gender':0.5, 'id':'', 'lawyer':''}
+            df = pd.DataFrame([dict_])
+            base = pd.concat([base, df], ignore_index=True)
+
+        return base
+    base = get_missing_names(all_names, base)
+
+
+
+    dupl_counter = base['id'].value_counts()
+
+
+    base =  (
+            base
+            .assign(lawyer = lambda x: x['lawyer'].astype(str))
+            .assign(dupl_counter = lambda x: x['id'].map(dupl_counter))
+            )
+
+
+
+# %%
+
+
+    base_b = (
+        owner
+        .get_surname_base(all_names, family_fuzz = 0.96)
+        .query("family!= ''")
+        .drop(columns =['family'])
+        .rename(columns = {'family_beta': "family"}))
+
+
+
+    base, first_name_matches = owner.map_family_subsets(base, first_name_fuzz = 0.75)
+# %%
+
+    base['alpha_clean'] = base['alpha_clean'].fillna(base['clean']).astype(str)
+
+    base['beta_clean'] = group_similar_strings(base['alpha_clean'],
+                                          min_similarity = 0.89,
+                                          )
+
+
+    family_dict = owner.get_surnames(set(base['beta_clean']))
+
+
+    base = (
+            base
+            .drop(columns = ['family', 'alpha_clean'])
+            .assign(family = lambda x : x['beta_clean'].map(family_dict))
+            )
+
+
+
+
+
+    # base = test_name_mapper.type_one_error_check(base, entry_names)
+    base = owner.map_initials(base)
+#     base = owner.map_gender(base, other)
+    id_mapper = owner.set_id(base['beta_clean'], "person_")
+    base['id'] = base['beta_clean'].map(id_mapper)
+
+    base = owner.set_lawyer_dummy(base,other)
+
+    base = get_missing_names(all_names, base)
+
+
+    dupl_counter = base['id'].value_counts()
+
+
+    base =  (
+            base
+            .assign(lawyer = lambda x: x['lawyer'].astype(str))
+            .assign(dupl_counter = lambda x: x['id'].map(dupl_counter))
+            )
+
+# %%
+    # base = owner.get_og_network(bulletin, base)
 
 
     return base

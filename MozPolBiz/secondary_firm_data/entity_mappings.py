@@ -24,15 +24,12 @@ import firm_register
 
 
 
-def entity_mappings(df, fdi_markets, keywrds , flexi):
+def entity_mappings(df, keywrds):
     entity_mapper = {}
     df, entity_mapper['bulletin_entities'] = firm_register.define_entities(df)
     df, entity_mapper  = firm_register.process_institution_entities(df, entity_mapper)
 
-    # entity_mapper = firm_register.map_top40_fdi(df, fdi_markets, entity_mapper, keywrds, flexi)
-
-
-    # df['firm_id'] = df['Companyname'].map(entity_mapper['bulletin_entities'])
+    df['firm_id'] = df['Companyname'].map(entity_mapper['bulletin_entities'])
 
 
 
