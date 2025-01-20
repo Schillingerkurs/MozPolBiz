@@ -121,10 +121,8 @@ def main():
      #   .pipe(corpus_translation.update_corpus_translation, HERE)
           )
 
- #%%
     df, entity_mapper = secondary_firm_data.entity_mappings(df,keywrds)
 
-#%%
     df = (
         df.pipe(firm_register.replace_date)
             .pipe(firm_register.map_anything_on_adm_names, adm_information)
@@ -141,6 +139,15 @@ def main():
     entity_mapper['individual_mappings']  = manage_entities.map_individual_characteristics(HERE)
 
 
+    name_mapper = entity_mapper['individual_mappings'].set_index("raw")['id'].to_dict()
+
+
+
+    name_mapper = {k:v for k,v in name_mapper.items() if v !="person__165346"}
+
+
+    df['Beneficial owner'] = df['Beneficial owner'].apply(lambda x: str(x).split(", "))
+    df['owner_id'] = df['Beneficial owner'].apply(lambda x:[name_mapper[l] for l in x if l in name_mapper.keys()] )
 
 
     store_files(df, entity_mapper, HERE)
