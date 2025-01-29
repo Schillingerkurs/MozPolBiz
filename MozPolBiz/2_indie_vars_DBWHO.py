@@ -4,6 +4,9 @@ Created on Sat Mar 26 09:53:25 2022
 
 @author: fs.egb
 """
+
+
+#%%
 from pathlib import Path
 # import random
 import pandas as pd
@@ -14,7 +17,6 @@ import sys
 
 
 # import ids
-
 
 
 HERE = Path(__file__).parent.parent.absolute()
@@ -71,7 +73,6 @@ def load_blltn_and_entities(HERE):
 
 firms, entity_mapper = load_blltn_and_entities(HERE)
 
-
 name_base =  entity_mapper['individual_mappings']
 
 name_mapper = dict(zip(name_base['raw'],name_base['id']))
@@ -116,42 +117,48 @@ panel_full = (
 #     pickle.dump(panel_full, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def main():
+    description = panel_full.describe().T
 
-description = panel_full.describe().T
-
-panel_full = panel_full[panel_full['y']<2020]
-
-
-panel_full = panel_full.fillna(0)
-panel_full['gender'] = panel_full['gender'].apply(lambda x: int(x*100))
-
-panel_full['lawyer'] = panel_full['lawyer'].str.replace("nan", "0")
+    panel_full = panel_full[panel_full['y']<2020]
 
 
-panel_full = setup_panel.pep_affil_bnz(panel_full,firms, entity_mapper)
-panel_full = panel_full.fillna(0)
+    panel_full = panel_full.fillna(0)
+    panel_full['gender'] = panel_full['gender'].apply(lambda x: int(x*100))
 
-panel_full = panel_full.drop(columns = [ 'MP','opposition_founder', 'family_old_peps', 'old_pep_business'] )
-# panel_full = panel_full.set_index('id')
-
+    panel_full['lawyer'] = panel_full['lawyer'].str.replace("nan", "0")
 
 
-controll_vars = panel_full[['id', 'family', 'gender', 'lawyer']].drop_duplicates()
+    panel_full = setup_panel.pep_affil_bnz(panel_full,firms, entity_mapper)
+    panel_full = panel_full.fillna(0)
 
-
-treatments = panel_full[['id', 'y', 'Minister', 'Governor', 'Vice-Minister', 'Minister_who_gov', 'cc', 'pb']]
-
-
-export.export_DBWHO_treatments(treatments, filename = "treatments_vars",
-                                HERE= HERE)
-
-export.export_DBWHO_treatments(controll_vars, filename = "controll_vars",
-                                HERE= HERE)
+    panel_full = panel_full.drop(columns = [ 'MP','opposition_founder', 'family_old_peps', 'old_pep_business'] )
+    # panel_full = panel_full.set_index('id')
 
 
 
-export.export_to_panel_folder(export = panel_full,
-                    filename = "treatment_individual_vars_1962",
-                    HERE = HERE)
+    controll_vars = panel_full[['id', 'family', 'gender', 'lawyer']].drop_duplicates()
+
+
+    treatments = panel_full[['id', 'y', 'Minister', 'Governor', 'Vice-Minister', 'Minister_who_gov', 'cc', 'pb']]
+
+
+
+    #%%
+    export.export_DBWHO_treatments(treatments, filename = "treatments_vars",
+                                    HERE= HERE)
+
+    export.export_DBWHO_treatments(controll_vars, filename = "controll_vars",
+                                    HERE= HERE)
+
+
+    export.export_to_panel_folder(export = panel_full,
+                        filename = "treatment_individual_vars_1962",
+                        HERE = HERE)
+
+    print("done")
+
+if __name__ == "__main__":
+    main()
 
 

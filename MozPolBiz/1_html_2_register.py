@@ -14,6 +14,7 @@ import pandas as pd
 import json
 pd.options.mode.chained_assignment = None  # default='warn'
 import pickle
+from unidecode import unidecode
 # import re
 import manage_entities
 # from shapely.geometry import MultiPolygon
@@ -84,6 +85,29 @@ def store_files(df, entity_mapper, HERE):
 
 
 
+def export_firms_to_stata(df, HERE):
+  df = (df
+  .assign(owner_id = lambda x: x['owner_id'].apply(lambda x: "; ".join(x) if isinstance(x, list) else x))
+  .rename(columns={"Beneficial owner": "Beneficial_owner"})
+  .applymap(lambda x: unidecode(x) if isinstance(x, str) else x)
+  .reset_index()
+  .drop(columns = ['ID do Registo','imputed_adm'])
+  .assign(person_shares = lambda x: "; ".join(x['person_shares']) if isinstance(x['person_shares'], list) else x['person_shares'])
+  .assign(institution_shares = lambda x: "; ".join(x['institution_shares']) if isinstance(x['institution_shares'], list) else x['institution_shares'])
+  .astype(str)
+  )
+
+
+
+  df.to_stata(Path(HERE/Path("data","processed","firmregister_full.dta")), version=117)
+
+  print("Stata export done")
+  return
+
+
+
+
+
 
 #%%
 
@@ -150,9 +174,19 @@ def main():
     df['owner_id'] = df['Beneficial owner'].apply(lambda x:[name_mapper[l] for l in x if l in name_mapper.keys()] )
 
 
+
+    export_firms_to_stata(df, HERE)
+
+
     store_files(df, entity_mapper, HERE)
 
     print("done")
+
+
+
+
+
+
 
 
 #%%
@@ -160,6 +194,7 @@ def main():
 
 if __name__== "__main__":
     main()
+
 
 
 

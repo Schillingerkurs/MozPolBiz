@@ -5,6 +5,46 @@ Politically exposed persons are linked to private firms in Mozambique since Inde
 
 
 
+## How to Run This Project on Your Personal Machine
+
+To run this project on your personal machine, follow these steps:
+
+1. **Clone this repository**:
+    ```sh
+    git clone https://github.com/yourusername/MozPolBiz.git
+    cd MozPolBiz
+    ```
+
+2. **Store all data files in the `data` folder**:
+    - Note: Proprietary files are not included in this repository. Ensure you have the necessary data files and place them in the appropriate subdirectories within the `data` folder.
+
+3. **Create a Conda or virtual environment**:
+    - Using Conda:
+        ```sh
+        conda create --name mozpolbiz python=3.12.3
+        conda activate mozpolbiz
+        ```
+    - Using virtualenv:
+        ```sh
+        python -m venv mozpolbiz
+        source mozpolbiz/bin/activate  # On Windows use `mozpolbiz\Scripts\activate`
+        ```
+
+4. **Install the required packages**:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+5. **Run the necessary scripts**:
+    - Execute the following scripts in order:
+        ```sh
+        python MozPolBiz/1_html_2_register.py
+        python MozPolBiz/2_indie_vars_DBWHO.py
+        python MozPolBiz/3_outcome_vars_DBWHO.py
+        ```
+
+By following these steps, you should be able to set up and run the project on your personal machine successfully.
+
 
 
 

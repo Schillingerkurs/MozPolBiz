@@ -231,65 +231,66 @@ def get_blltn_descriptives(df):
 
 
 
-y_i = range(1989,2021,5)
 
-# id_level = ['id']
+def main():
+    y_i = range(1989,2021,5)
+    id_level = ['id',"family"]
 
-
-
-id_level = ['id',"family"]
-
-
-description = {}
+    description = {}
 
 
-keyword_dict = pd.ExcelFile(HERE/Path("data","raw","keywords",
-            "all_keywords_mapper.xlsx"))
+    keyword_dict = pd.ExcelFile(HERE/Path("data","raw","keywords",
+                "all_keywords_mapper.xlsx"))
 
 
-for id_ in id_level:
+    for id_ in id_level:
 
-    firms, entity_mapper = load_data(HERE)
-    df = ids.manage_ids_in_bulletin(firms, entity_mapper, level = id_)
+        firms, entity_mapper = load_data(HERE)
+        df = ids.manage_ids_in_bulletin(firms, entity_mapper, level = id_)
 
-    df = dbwho_specs.map_industry_keywords(df, keyword_dict)
+        df = dbwho_specs.map_industry_keywords(df, keyword_dict)
 
-    name_ids = entity_mapper['individual_mappings'][id_].unique()
+        name_ids = entity_mapper['individual_mappings'][id_].unique()
 
-    panel = setup_panel.get_panel_identifier(y_i, name_ids)
+        panel = setup_panel.get_panel_identifier(y_i, name_ids)
 
-    f_e = firms_per_entity_type(panel, y_i, df)
-    f_all, graphs = main_outcomes(panel, y_i, df)
+        f_e = firms_per_entity_type(panel, y_i, df)
+        f_all, graphs = main_outcomes(panel, y_i, df)
 
-    f_all = setup_panel.count_dbwho_contolls(df,f_all, y_i)
+        f_all = setup_panel.count_dbwho_contolls(df,f_all, y_i)
 
 
-    if id_ == 'id':
-        get_componts(graphs,HERE)
-        family_partner = network.count_family_business_partners(graphs, HERE,
-                                                                panel,entity_mapper)
+        if id_ == 'id':
+            get_componts(graphs,HERE)
+            family_partner = network.count_family_business_partners(graphs, HERE,
+                                                                    panel,entity_mapper)
 
-    f_industries = setup_panel.count_dbwho_industries(df, panel, y_i)
-    cntrl_panel = dwbho_cntr_vars(df, panel, y_i)
+        f_industries = setup_panel.count_dbwho_industries(df, panel, y_i)
+        cntrl_panel = dwbho_cntr_vars(df, panel, y_i)
 
-    full_panel = (f_e
-                  .merge(f_all, left_on = 'm', right_on = 'm')
-                  .merge(f_industries, left_on = 'm', right_on = 'm')
-                  .merge(cntrl_panel, left_on = 'm', right_on = 'm')
-                 # .assign(family_prtnr1 = lambda x: x['m'].map(family_partner))
-                  )
+        full_panel = (f_e
+                    .merge(f_all, left_on = 'm', right_on = 'm')
+                    .merge(f_industries, left_on = 'm', right_on = 'm')
+                    .merge(cntrl_panel, left_on = 'm', right_on = 'm')
+                    # .assign(family_prtnr1 = lambda x: x['m'].map(family_partner))
+                    )
 
-    full_panel = setup_panel.first_firm(full_panel,df)
-    full_panel = full_panel.drop(columns = ['m'])
-    full_panel = full_panel.dropna(subset = ['first_firm'])
+        full_panel = setup_panel.first_firm(full_panel,df)
+        full_panel = full_panel.drop(columns = ['m'])
+        full_panel = full_panel.dropna(subset = ['first_firm'])
 
-    full_panel = export.dbwho_missing_cols(full_panel, HERE)
+        full_panel = export.dbwho_missing_cols(full_panel, HERE)
 
-    export.export_DBWHO_outcomes(full_panel = full_panel,
-                          filename = f"outcome_vars_{id_}",
-                          HERE = HERE)
+        export.export_DBWHO_outcomes(full_panel = full_panel,
+                            filename = f"outcome_vars_{id_}",
+                            HERE = HERE)
 
-    description[id_] = full_panel.describe().T
+        description[id_] = full_panel.describe().T
+
+        print(f"done with {id_}")
 
 
 
+if __name__ == "__main__":
+    main()
+    print("done with all outcomes")
