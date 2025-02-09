@@ -11,6 +11,7 @@ Look at html and build the relevant cols.
 from pathlib import Path
 import random
 import pandas as pd
+import numpy as np
 import json
 pd.options.mode.chained_assignment = None  # default='warn'
 import pickle
@@ -160,30 +161,43 @@ def main():
         )
 
 
-    entity_mapper['individual_mappings']  = manage_entities.map_individual_characteristics(HERE)
+    entity_mapper['individual_mappings'], df  = manage_entities.map_individual_characteristics(HERE,df)
 
 
     name_mapper = entity_mapper['individual_mappings'].set_index("raw")['id'].to_dict()
 
-
-
     name_mapper = {k:v for k,v in name_mapper.items() if v !="person__165346"}
 
 
-    df['Beneficial owner'] = df['Beneficial owner'].apply(lambda x: str(x).split(", "))
-    df['owner_id'] = df['Beneficial owner'].apply(lambda x:[name_mapper[l] for l in x if l in name_mapper.keys()] )
+    df['full_owner'] = df['full_owner'].fillna("[]")
+
+    df['owner_id'] = df['full_owner'].apply(lambda x:[name_mapper[l] for l in x if l in name_mapper.keys()] )
 
 
+    df['owner_id'] = df['owner_id'].apply(lambda x: "; ".join(x) if isinstance(x, list) else np.nan)
 
-    export_firms_to_stata(df, HERE)
+
+    df = df.drop(columns=['owner'])
+
+    df['full_owner'] = df['full_owner'].apply(lambda x: "; ".join(x) if isinstance(x, list) else np.nan)
 
 
     store_files(df, entity_mapper, HERE)
 
+
+
+
+    from unidecode import unidecode
+    # TODO: Check if this is all right and format code to export the entity mappings for transaperencz. Unidecode all columns in the dataframe
+    indivdual_df = df.applymap(lambda x: unidecode(x) if isinstance(x, str) else x)
+    data_dir = '../data/processed'
+    indivdual_df.to_stata(os.path.join(data_dir, 'individual_mappings.dta'))
+
+
+    export_firms_to_stata(df.drop(columns=['Beneficial owner']), HERE)
+
+
     print("done")
-
-
-
 
 
 

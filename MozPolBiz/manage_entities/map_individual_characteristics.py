@@ -109,11 +109,11 @@ def other_name_characteristics(HERE):
 
 # %%
 
-def map_individual_characteristics(HERE):
+def map_individual_characteristics(HERE, bulletin):
 
 
 # %%
-    bulletin = pd.read_pickle(HERE/Path("data","interim","firmregister_full.pkl"))
+    # bulletin = pd.read_pickle(HERE/Path("data","interim","firmregister_full.pkl"))
     pep_mandates = load_nat_peps(HERE)
     pep_mandates  =  owner.clean_cip3(pep_mandates)
     pep_mandates = owner.adjust_lexis_names(pep_mandates)
@@ -133,6 +133,8 @@ def map_individual_characteristics(HERE):
 
     entry_names = owner.add_blltn_owner(bulletin)
 
+
+    bulletin['full_owner'] = bulletin.index.map(entry_names)
 
 
     all_names =  owner.get_all_names(pep_mandates, entry_names, other)
@@ -267,4 +269,4 @@ def map_individual_characteristics(HERE):
     # base = owner.get_og_network(bulletin, base)
 
 
-    return base
+    return base, bulletin

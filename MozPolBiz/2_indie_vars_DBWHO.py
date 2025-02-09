@@ -33,7 +33,6 @@ import setup_panel
 
 
 
-
 def load_pep_data(HERE):
     # load all files in pep_directory
     d = HERE/Path("data","external","pep_data")
@@ -69,47 +68,47 @@ def load_blltn_and_entities(HERE):
     return firms, entity_mapper
 
 
+def main():
+
+    firms, entity_mapper = load_blltn_and_entities(HERE)
+
+    name_base =  entity_mapper['individual_mappings']
+
+    name_mapper = dict(zip(name_base['raw'],name_base['id']))
+    # og_mapper = dict(zip(name_base['id'], name_base['og']))
 
 
-firms, entity_mapper = load_blltn_and_entities(HERE)
+    pep_mandates = load_pep_data(HERE)
 
-name_base =  entity_mapper['individual_mappings']
-
-name_mapper = dict(zip(name_base['raw'],name_base['id']))
-# og_mapper = dict(zip(name_base['id'], name_base['og']))
+    all_owners = [x for x in name_base['id'].unique() if isinstance(x,str) if x != '']
 
 
-pep_mandates = load_pep_data(HERE)
-
-all_owners = [x for x in name_base['id'].unique() if isinstance(x,str) if x != '']
+    y_i = range(1962,2023,1)
 
 
-y_i = range(1962,2023,1)
-
-
-panel = manage_pep_data.setup_pep_panel(y_i, all_owners, pep_mandates, name_mapper)
+    panel = manage_pep_data.setup_pep_panel(y_i, all_owners, pep_mandates, name_mapper)
 
 
 
-pers_char = name_base[['family','gender', 'id', 'lawyer']].drop_duplicates('id')
+    pers_char = name_base[['family','gender', 'id', 'lawyer']].drop_duplicates('id')
 
 
-party_mapper = manage_pep_data.get_party_founders(panel, firms, y_i, entity_mapper)
+    party_mapper = manage_pep_data.get_party_founders(panel, firms, y_i, entity_mapper)
 
-oppo_mapper = {k: v for k,v in party_mapper.items() if "frelimo" not in v.lower()}
+    oppo_mapper = {k: v for k,v in party_mapper.items() if "frelimo" not in v.lower()}
 
-print("starting the panel")
-panel_full = (
-        panel
-        .merge(pers_char, left_on ="id", right_on = "id", how = 'left')
-        # .assign(og  = lambda x : x['id'].map(og_mapper))
-        .fillna(0)
-        .assign(gender  = lambda x : x['gender'].astype(float))
-        .assign(lawyer  = lambda x : x['lawyer'].astype(str))
-        # .assign(og  = lambda x : x['og'].astype(str))
-        .sort_values(by=['y'])
-        .assign(opposition_founder  = lambda x : x['m'].map(oppo_mapper))
-        .drop(columns = ['m'])  )
+    print("starting the panel")
+    panel_full = (
+            panel
+            .merge(pers_char, left_on ="id", right_on = "id", how = 'left')
+            # .assign(og  = lambda x : x['id'].map(og_mapper))
+            .fillna(0)
+            .assign(gender  = lambda x : x['gender'].astype(float))
+            .assign(lawyer  = lambda x : x['lawyer'].astype(str))
+            # .assign(og  = lambda x : x['og'].astype(str))
+            .sort_values(by=['y'])
+            .assign(opposition_founder  = lambda x : x['m'].map(oppo_mapper))
+            .drop(columns = ['m'])  )
 
 
 
@@ -117,7 +116,6 @@ panel_full = (
 #     pickle.dump(panel_full, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def main():
     description = panel_full.describe().T
 
     panel_full = panel_full[panel_full['y']<2020]
