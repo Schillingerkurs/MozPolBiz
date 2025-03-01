@@ -20,7 +20,7 @@ from unidecode import unidecode
 import manage_entities
 # from shapely.geometry import MultiPolygon
 
-
+import dbwho_specs
 
 import orga_classifier.impute_orga_type as impute_orga_type
 import firm_register
@@ -98,6 +98,8 @@ def export_firms_to_stata(df, HERE):
   .astype(str)
   )
 
+
+  df.columns = df.columns.str.replace(' ', '_')
 
 
   df.to_stata(Path(HERE/Path("data","processed","firmregister_full.dta")), version=117)
@@ -180,6 +182,11 @@ def main():
     df = df.drop(columns=['owner'])
 
     df['full_owner'] = df['full_owner'].apply(lambda x: "; ".join(x) if isinstance(x, list) else np.nan)
+
+
+    df = dbwho_specs.map_industry_keywords(df, keywrds)
+
+#%%
 
 
     store_files(df, entity_mapper, HERE)

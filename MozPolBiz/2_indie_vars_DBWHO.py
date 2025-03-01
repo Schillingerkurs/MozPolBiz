@@ -14,6 +14,8 @@ import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
 import pickle
 import sys
+import gender_guesser.detector as gender
+d = gender.Detector()
 
 
 # import ids
@@ -68,15 +70,26 @@ def load_blltn_and_entities(HERE):
     return firms, entity_mapper
 
 
+
+#%%
 def main():
+
+    #%%
 
     firms, entity_mapper = load_blltn_and_entities(HERE)
 
     name_base =  entity_mapper['individual_mappings']
 
-    name_mapper = dict(zip(name_base['raw'],name_base['id']))
-    # og_mapper = dict(zip(name_base['id'], name_base['og']))
+    gender_mapper = {k: k.split(" ")[0] for k in set(name_base['gamma_clean'])}
 
+
+    gender_mapper = {k: v.capitalize() for k, v in gender_mapper.items() }
+
+    gender_mapper = {k: d.get_gender(v) for k, v in gender_mapper.items() }
+
+    name_base = name_base.assign(gender = lambda x: x['gamma_clean'].map(gender_mapper))
+
+    name_mapper = dict(zip(name_base['raw'],name_base['id']))
 
     pep_mandates = load_pep_data(HERE)
 
@@ -103,7 +116,7 @@ def main():
             .merge(pers_char, left_on ="id", right_on = "id", how = 'left')
             # .assign(og  = lambda x : x['id'].map(og_mapper))
             .fillna(0)
-            .assign(gender  = lambda x : x['gender'].astype(float))
+            .assign(gender  = lambda x : x['gender'].astype(str))
             .assign(lawyer  = lambda x : x['lawyer'].astype(str))
             # .assign(og  = lambda x : x['og'].astype(str))
             .sort_values(by=['y'])
@@ -121,8 +134,13 @@ def main():
     panel_full = panel_full[panel_full['y']<2020]
 
 
+
+
+
     panel_full = panel_full.fillna(0)
-    panel_full['gender'] = panel_full['gender'].apply(lambda x: int(x*100))
+
+
+    # panel_full['gender'] = panel_full['gender'].apply(lambda x: int(x*100))
 
     panel_full['lawyer'] = panel_full['lawyer'].str.replace("nan", "0")
 
@@ -134,11 +152,13 @@ def main():
     # panel_full = panel_full.set_index('id')
 
 
+    panel_full = panel_full.rename(columns={"Vice-Minister": "Vice_Minister"})
 
     controll_vars = panel_full[['id', 'family', 'gender', 'lawyer']].drop_duplicates()
 
 
-    treatments = panel_full[['id', 'y', 'Minister', 'Governor', 'Vice-Minister', 'Minister_who_gov', 'cc', 'pb']]
+    treatments = panel_full[['id', 'y', 'Minister', 'Governor', 'Vice_Minister', 'Minister_who_gov', 'cc', 'pb']]
+
 
 
 
